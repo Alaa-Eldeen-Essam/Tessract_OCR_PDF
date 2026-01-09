@@ -1,4 +1,4 @@
-# PDF OCR (Simple MVC)
+# PDF OCR
 
 Simple MVC-style Python app that OCRs English or Arabic PDFs with Tesseract and writes a .txt file with the same base name.
 
