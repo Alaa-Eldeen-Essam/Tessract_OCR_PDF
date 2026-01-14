@@ -8,15 +8,33 @@ from .view import ConsoleView
 
 
 class OcrController:
+    SUPPORTED_EXTENSIONS = {
+        ".pdf",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".tif",
+        ".tiff",
+        ".bmp",
+        ".webp",
+    }
+
     def __init__(self) -> None:
         self.view = ConsoleView()
 
     def _parse_args(self) -> argparse.Namespace:
+        extensions = ", ".join(sorted(self.SUPPORTED_EXTENSIONS))
         parser = argparse.ArgumentParser(
-            description="OCR PDF files to text with Tesseract."
+            description="OCR PDF or image files to text with Tesseract."
         )
         parser.add_argument(
-            "-i", "--input", required=True, help="PDF file or folder of PDFs"
+            "-i",
+            "--input",
+            required=True,
+            help=(
+                "PDF/image file or folder of supported files (recursive) "
+                f"({extensions})"
+            ),
         )
         parser.add_argument(
             "-c",
@@ -29,6 +47,12 @@ class OcrController:
         )
         parser.add_argument(
             "-d", "--dpi", type=int, default=None, help="Render DPI for PDF pages"
+        )
+        parser.add_argument(
+            "--image-dpi",
+            type=int,
+            default=None,
+            help="Assumed DPI for image inputs (Tesseract --dpi)",
         )
         parser.add_argument(
             "-o", "--output-dir", default=None, help="Optional output directory"
@@ -52,13 +76,24 @@ class OcrController:
         return {
             "lang": section.get("lang"),
             "dpi": section.get("dpi"),
+            "image_dpi": section.get("image_dpi"),
             "output_dir": section.get("output_dir"),
         }
 
-    def _collect_pdfs(self, input_path: Path) -> list[Path]:
+    def _collect_inputs(self, input_path: Path) -> list[Path]:
         if input_path.is_dir():
-            return sorted(input_path.glob("*.pdf"))
-        if input_path.is_file() and input_path.suffix.lower() == ".pdf":
+            return sorted(
+                [
+                    path
+                    for path in input_path.rglob("*")
+                    if path.is_file()
+                    and path.suffix.lower() in self.SUPPORTED_EXTENSIONS
+                ]
+            )
+        if (
+            input_path.is_file()
+            and input_path.suffix.lower() in self.SUPPORTED_EXTENSIONS
+        ):
             return [input_path]
         return []
 
@@ -79,10 +114,14 @@ class OcrController:
                 return 2
 
         input_path = Path(args.input)
-        pdfs = self._collect_pdfs(input_path)
+        files = self._collect_inputs(input_path)
 
-        if not pdfs:
-            self.view.error("Input must be a PDF file or folder containing PDFs.")
+        if not files:
+            extensions = ", ".join(sorted(self.SUPPORTED_EXTENSIONS))
+            self.view.error(
+                "Input must be a PDF/image file or folder containing: "
+                f"{extensions}"
+            )
             return 2
 
         lang = args.lang or config.get("lang") or "eng+ara"
@@ -101,6 +140,23 @@ class OcrController:
             self.view.error("DPI must be a positive integer.")
             return 2
 
+        image_dpi_raw = (
+            args.image_dpi
+            if args.image_dpi is not None
+            else config.get("image_dpi")
+        )
+        if image_dpi_raw in (None, ""):
+            image_dpi = None
+        else:
+            try:
+                image_dpi = int(image_dpi_raw)
+            except ValueError:
+                self.view.error("Image DPI must be an integer.")
+                return 2
+            if image_dpi <= 0:
+                self.view.error("Image DPI must be a positive integer.")
+                return 2
+
         output_dir_value = args.output_dir
         if output_dir_value in (None, ""):
             output_dir_value = config.get("output_dir")
@@ -108,14 +164,14 @@ class OcrController:
             output_dir_value = "export"
         output_dir = Path(output_dir_value)
 
-        model = OcrModel(lang=lang, dpi=dpi)
+        model = OcrModel(lang=lang, dpi=dpi, image_dpi=image_dpi)
 
-        for pdf_path in pdfs:
-            self.view.info(f"OCR: {pdf_path.name}")
-            text = model.extract_text(pdf_path)
-            target_dir = output_dir or pdf_path.parent
+        for input_file in files:
+            self.view.info(f"OCR: {input_file.name}")
+            text = model.extract_text(input_file)
+            target_dir = output_dir or input_file.parent
             target_dir.mkdir(parents=True, exist_ok=True)
-            output_path = target_dir / f"{pdf_path.stem}.txt"
+            output_path = target_dir / f"{input_file.stem}.txt"
             output_path.write_text(text, encoding="utf-8")
             self.view.success(f"Wrote: {output_path}")
         return 0

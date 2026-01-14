@@ -1,6 +1,6 @@
-# PDF OCR
+# PDF and Image OCR
 
-Simple MVC-style Python app that OCRs English or Arabic PDFs with Tesseract and writes a .txt file with the same base name.
+Simple MVC-style Python app that OCRs English or Arabic PDFs and images with Tesseract and writes a .txt file with the same base name.
 
 ## Requirements
 - Python 3.9+
@@ -63,23 +63,30 @@ Example:
 [ocr]
 lang = eng+ara
 dpi = 300
+image_dpi =
 output_dir = export
 ```
 
 Notes:
 - `output_dir` defaults to `export` and is created if it does not exist.
-- Higher DPI can improve OCR accuracy but increases processing time and memory usage.
+- Higher DPI can improve PDF OCR accuracy but increases processing time and memory usage.
+- `image_dpi` sets the assumed DPI for image inputs when metadata is missing.
 - CLI flags override config values.
 
 ## Usage
-Single file:
+Single PDF:
 ```bash
 python main.py -i path\to\file.pdf
 ```
 
-Batch folder:
+Single image:
 ```bash
-python main.py -i path\to\folder\with\pdfs
+python main.py -i path\to\image.png
+```
+
+Batch folder (PDFs and images, recursive):
+```bash
+python main.py -i path\to\folder\with\files
 ```
 
 Optional output directory, language, and DPI:
@@ -87,7 +94,14 @@ Optional output directory, language, and DPI:
 python main.py -i input.pdf -o output_dir -l eng+ara -d 300
 ```
 
+Optional image DPI:
+```bash
+python main.py -i image.png --image-dpi 300
+```
+
 Use a config file explicitly:
 ```bash
 python main.py -i input.pdf -c config.ini
 ```
+
+Supported image extensions: `.png`, `.jpg`, `.jpeg`, `.tif`, `.tiff`, `.bmp`, `.webp`.
