@@ -1,0 +1,7 @@
+/controllers/__pycache__/*.pyc
+/layout_OCR/__pycache__/*.pyc
+/models/__pycache__/*.pyc
+/models/detectors/__pycache__/*.pyc
+/utils/__pycache__/*.pyc
+/outputs/*
+/debug/*
