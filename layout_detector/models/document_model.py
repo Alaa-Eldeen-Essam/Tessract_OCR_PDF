@@ -24,9 +24,9 @@ class Document:
     def is_pdf(self) -> bool:
         return self.path.suffix.lower() == ".pdf"
 
-    def load_pages(self, dpi: int) -> List[DocumentPage]:
+    def load_pages(self, dpi: int, poppler_path: str | None = None) -> List[DocumentPage]:
         if self.is_pdf:
-            images = pdf_to_images(self.path, dpi=dpi)
+            images = pdf_to_images(self.path, dpi=dpi, poppler_path=poppler_path)
             return [
                 DocumentPage(index=i, image=image, source_name=self.path.stem)
                 for i, image in enumerate(images)

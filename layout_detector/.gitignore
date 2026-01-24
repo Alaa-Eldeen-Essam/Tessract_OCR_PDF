@@ -1,0 +1,11 @@
+/outputs
+/__pycache__
+/*.pyc
+/.vscode
+/.idea
+/__pycache__/*.pyc
+/controllers/__pycache__/*.pyc
+/models/__pycache__/*.pyc
+/models/detectors/__pycache__/*.pyc
+/utils/__pycache__/*.pyc
+/views/__pycache__/*.pyc

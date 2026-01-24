@@ -4,12 +4,10 @@ from typing import Dict, Type
 
 from .base import LayoutDetector
 from .simple_cv_detector import SimpleCvConfig, SimpleCvDetector
-from .tesseract_detector import TesseractConfig, TesseractDetector
 
 
 DETECTOR_REGISTRY: Dict[str, Type[LayoutDetector]] = {
     SimpleCvDetector.name: SimpleCvDetector,
-    TesseractDetector.name: TesseractDetector,
 }
 
 
@@ -27,14 +25,20 @@ def build_detector(name: str, options: dict | None = None) -> LayoutDetector:
             min_area=options.get("min_area", SimpleCvConfig.min_area),
             kernel_width=options.get("kernel_width", SimpleCvConfig.kernel_width),
             kernel_height=options.get("kernel_height", SimpleCvConfig.kernel_height),
+            adaptive_block_size=options.get(
+                "adaptive_block_size", SimpleCvConfig.adaptive_block_size
+            ),
+            adaptive_c=options.get("adaptive_c", SimpleCvConfig.adaptive_c),
+            remove_lines=options.get("remove_lines", SimpleCvConfig.remove_lines),
+            line_length_ratio=options.get(
+                "line_length_ratio", SimpleCvConfig.line_length_ratio
+            ),
+            line_thickness=options.get(
+                "line_thickness", SimpleCvConfig.line_thickness
+            ),
+            border_margin=options.get("border_margin", SimpleCvConfig.border_margin),
+            max_area_ratio=options.get("max_area_ratio", SimpleCvConfig.max_area_ratio),
         )
         return SimpleCvDetector(config)
-
-    if name == TesseractDetector.name:
-        config = TesseractConfig(
-            langs=options.get("langs", TesseractConfig.langs),
-            min_confidence=options.get("min_confidence", TesseractConfig.min_confidence),
-        )
-        return TesseractDetector(config)
 
     return DETECTOR_REGISTRY[name]()

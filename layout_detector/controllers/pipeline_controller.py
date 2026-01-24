@@ -15,9 +15,11 @@ class PipelineController:
         detector_name: str,
         detector_options: Dict[str, object] | None = None,
         view_options: Dict[str, object] | None = None,
+        poppler_path: str | None = None,
     ) -> None:
         self.detector = build_detector(detector_name, detector_options)
         self.view_options = view_options or {}
+        self.poppler_path = poppler_path
 
     def run(self, input_path: Path, output_dir: Path, dpi: int) -> List[Path]:
         files = collect_inputs(input_path)
@@ -33,7 +35,7 @@ class PipelineController:
     def _process_file(self, file_path: Path, output_dir: Path, dpi: int) -> List[Path]:
         document = Document(file_path)
         outputs: List[Path] = []
-        for page in document.load_pages(dpi):
+        for page in document.load_pages(dpi, poppler_path=self.poppler_path):
             boxes = self.detector.detect(page.image)
             rendered = draw_boxes(
                 page.image,
